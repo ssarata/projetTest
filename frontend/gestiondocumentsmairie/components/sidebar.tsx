@@ -1,65 +1,42 @@
-"use client"
+"use client"; // Indique que ce composant est côté client (Next.js)
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { LogOut, Settings, FileText, Users, LayoutDashboard, FilePlus, Archive, ChevronDown, Building } from "lucide-react"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation"; // Pour connaître la route active
+import clsx from "clsx"; // Pour conditionner les classes CSS
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { 
-    href: "/templates/index", 
-    label: "Templates", 
-    icon: FilePlus,
-    hasDropdown: true,
-    dropdownItems: [
-      { href: "/templates/index", label: "Tous les templates", icon: FileText },
-      { href: "/templates/archives", label: "Templates archivés", icon: Archive }
-    ]
-  },
-  { 
-    href: "/documents", 
-    label: "Documents", 
-    icon: FileText,
-    hasDropdown: true,
-    dropdownItems: [
-      { href: "/documents", label: "Tous les documents", icon: FileText },
-      { href: "/documents/archives", label: "Documents archivés", icon: Archive }
-    ]
-  },
-  { href: "/personnes", label: "Personnes", icon: Users },
-  { 
-    href: "/utilisateurs", 
-    label: "Utilisateurs", 
-    icon: Users, 
-    hasDropdown: true,
-    dropdownItems: [
-      { href: "/utilisateurs", label: "Voir les utilisateurs", icon: Users },
-      { href: "/utilisateurs/archives", label: "Voir les utilisateurs archivés", icon: Archive }
-    ]
-  },
-  { href: "/utilisateurs/mairies", label: "Paramètres", icon: Settings },
-]
+// Icônes utilisées dans le menu
+import {
+  ChevronDown,
+  FileText,
+  LogOut,
+  Settings,
+  Users,
+  Building,
+  LayoutDashboard
+} from "lucide-react";
+
+// Composants UI pour le menu déroulant
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function Sidebar() {
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
-  const pathname = usePathname()
+  const pathname = usePathname(); // On récupère le chemin actuel pour savoir quel lien est actif
+  const [currentTime, setCurrentTime] = useState(new Date()); // État local pour afficher l'heure (optionnel ici)
 
+  // Mettre à jour l'heure chaque seconde
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const toggleDropdown = (label: string) => {
-    setActiveDropdown(activeDropdown === label ? null : label)
-  }
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <aside className="w-64 h-screen flex flex-col border-r border-slate-200 bg-background dark:bg-slate-900 text-foreground">
-      {/* Header */}
+    <aside className="w-64 h-screen flex flex-col border-r border-slate-200 bg-white">
+      {/* --- EN-TÊTE (Logo) --- */}
       <div className="p-4 border-b border-slate-200">
         <div className="flex items-center gap-2">
           <div className="text-emerald-600 font-bold text-2xl">Docu</div>
@@ -67,69 +44,157 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
+      {/* --- MENU NAVIGATION --- */}
       <nav className="p-4 flex-1 overflow-y-auto">
         <ul className="space-y-2">
-          {navItems.map(({ label, href, icon: Icon, hasDropdown, dropdownItems }) => (
-            <li key={href} className="relative">
-              {hasDropdown ? (
-                <div className="relative">
-                  <button
-                    onClick={() => toggleDropdown(label)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md ${
-                      pathname.startsWith(href) 
-                        ? "bg-emerald-600 text-white" 
-                        : "text-slate-700 hover:bg-slate-100"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-5 h-5 text-emerald-600" />
-                      <span className="font-medium">{label}</span>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${
-                      activeDropdown === label ? "rotate-180" : ""
-                    }`} />
-                  </button>
 
-                  {/* Dropdown Menu */}
-                  {activeDropdown === label && (
-                    <div className="ml-4 mt-1 space-y-1">
-                      {dropdownItems?.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
-                            pathname === item.href
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "text-slate-700 hover:bg-slate-100"
-                          }`}
-                        >
-                          <item.icon className="w-4 h-4 text-emerald-600" />
-                          <span>{item.label}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  href={href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md ${
-                    pathname === href
+          {/* --- Lien vers le dashboard --- */}
+          <li>
+            <Link
+              href="/dashboard"
+              className={clsx(
+                "flex items-center gap-3 px-3 py-2 rounded-md",
+                pathname === "/dashboard"
+                  ? "bg-emerald-600 text-white" // Si actif
+                  : "text-slate-700 hover:bg-slate-100"
+              )}
+            >
+              <LayoutDashboard className="w-5 h-5 text-emerald-600" />
+              <span className="font-medium">Dashboard</span>
+            </Link>
+          </li>
+
+          {/* --- MENU DÉROULANT : Templates --- */}
+          <li>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={clsx(
+                    "w-full flex items-center justify-between px-3 py-2 rounded-md",
+                    pathname.includes("/templates")
                       ? "bg-emerald-600 text-white"
                       : "text-slate-700 hover:bg-slate-100"
-                  }`}
+                  )}
                 >
-                  <Icon className="w-5 h-5 text-emerald-600" />
-                  <span className="font-medium">{label}</span>
-                </Link>
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-emerald-600" />
+                    <span className="font-medium">Templates</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+
+              {/* Sous-menus */}
+              <DropdownMenuContent side="right" align="start" className="ml-2">
+                <DropdownMenuItem asChild>
+                  <Link href="/templates/index">Tous les templates</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/templates/archives">Templates archivés</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </li>
+
+          {/* --- MENU DÉROULANT : Documents --- */}
+          <li>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={clsx(
+                    "w-full flex items-center justify-between px-3 py-2 rounded-md",
+                    pathname.includes("/documents")
+                      ? "bg-emerald-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-emerald-600" />
+                    <span className="font-medium">Documents</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+
+              {/* Sous-menus */}
+              <DropdownMenuContent side="right" align="start" className="ml-2">
+                <DropdownMenuItem asChild>
+                  <Link href="/documents">Tous les documents</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/documents/archives">Documents archivés</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </li>
+
+          {/* --- MENU DÉROULANT : Personnes (ajouté comme demandé) --- */}
+          <li>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={clsx(
+                    "w-full flex items-center justify-between px-3 py-2 rounded-md",
+                    pathname.includes("/personnes")
+                      ? "bg-emerald-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-emerald-600" />
+                    <span className="font-medium">Personnes</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+
+              {/* Sous-menus */}
+              <DropdownMenuContent side="right" align="start" className="ml-2">
+                <DropdownMenuItem asChild>
+                  <Link href="/personnes">Toutes les personnes</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/personnes/archives">Personnes archivées</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </li>
+
+          {/* --- Lien vers la mairie --- */}
+          <li>
+            <Link
+              href="/mairie"
+              className={clsx(
+                "flex items-center gap-3 px-3 py-2 rounded-md",
+                pathname === "/mairie"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-700 hover:bg-slate-100"
               )}
-            </li>
-          ))}
+            >
+              <Building className="w-5 h-5 text-emerald-600" />
+              <span className="font-medium">Mairie</span>
+            </Link>
+          </li>
+
+          {/* --- Lien vers les paramètres --- */}
+          <li>
+            <Link
+              href="/settings"
+              className={clsx(
+                "flex items-center gap-3 px-3 py-2 rounded-md",
+                pathname === "/settings"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-700 hover:bg-slate-100"
+              )}
+            >
+              <Settings className="w-5 h-5 text-emerald-600" />
+              <span className="font-medium">Paramètres</span>
+            </Link>
+          </li>
         </ul>
       </nav>
 
-      {/* Déconnexion */}
+      {/* --- Bouton de déconnexion --- */}
       <div className="p-4 border-t border-slate-200">
         <Link
           href="/utilisateurs/logout"
@@ -140,5 +205,5 @@ export default function Sidebar() {
         </Link>
       </div>
     </aside>
-  )
+  );
 }

@@ -1,13 +1,15 @@
+// On importe axios pour faire des requêtes HTTP
 import axios from "axios";
 import { Personne } from "@/types/personne";
 
+// L'URL de base de l'API backend
 const API_BASE_URL = "http://localhost:3000/api/personnes";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Intercepteur pour ajouter le token dans les headers côté client uniquement
+// ➕ Intercepteur pour ajouter automatiquement le token
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
@@ -22,20 +24,15 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// 💡 Service pour Personne
 const personneService = {
   async getAll(): Promise<Personne[]> {
     try {
       const response = await apiClient.get<Personne[]>("");
       return response.data;
     } catch (error: any) {
-      console.error("Erreur Axios complète getAll :", error);
-      if (error?.response) {
-        console.error("Status:", error.response.status);
-        console.error("Data:", error.response.data);
-      }
-      throw new Error(
-        error?.response?.data?.message || "Erreur lors du chargement des personnes."
-      );
+      console.error("Erreur getAll :", getAxiosMessage(error));
+      throw new Error("Erreur lors du chargement des personnes.");
     }
   },
 
@@ -44,17 +41,11 @@ const personneService = {
       const response = await apiClient.get<Personne>(`/${id}`);
       return response.data;
     } catch (error: any) {
-      console.error("Erreur Axios complète getById :", error);
-      if (error?.response) {
-        console.error("Status:", error.response.status);
-        console.error("Data:", error.response.data);
-        if (error.response.status === 403) {
-          throw new Error("Accès interdit : vous n'avez pas les droits pour voir cette personne.");
-        }
+      console.error("Erreur getById :", getAxiosMessage(error));
+      if (error?.response?.status === 403) {
+        throw new Error("Accès interdit : vous n'avez pas les droits.");
       }
-      throw new Error(
-        error?.response?.data?.message || "Erreur lors de la récupération de la personne."
-      );
+      throw new Error("Erreur lors de la récupération de la personne.");
     }
   },
 
@@ -63,10 +54,8 @@ const personneService = {
       const response = await apiClient.post<Personne>("/", data);
       return response.data;
     } catch (error: any) {
-      console.error("Erreur création :", error?.response?.data || error.message);
-      throw new Error(
-        error?.response?.data?.message || "Erreur lors de la création de la personne."
-      );
+      console.error("Erreur création :", getAxiosMessage(error));
+      throw new Error("Erreur lors de la création de la personne.");
     }
   },
 
@@ -75,10 +64,8 @@ const personneService = {
       const response = await apiClient.put<Personne>(`/${id}`, data);
       return response.data;
     } catch (error: any) {
-      console.error("Erreur mise à jour :", error?.response?.data || error.message);
-      throw new Error(
-        error?.response?.data?.message || "Erreur lors de la mise à jour de la personne."
-      );
+      console.error("Erreur mise à jour :", getAxiosMessage(error));
+      throw new Error("Erreur lors de la mise à jour de la personne.");
     }
   },
 
@@ -86,12 +73,50 @@ const personneService = {
     try {
       await apiClient.delete(`/${id}`);
     } catch (error: any) {
-      console.error("Erreur suppression :", error?.response?.data || error.message);
-      throw new Error(
-        error?.response?.data?.message || "Erreur lors de la suppression de la personne."
-      );
+      const message = getAxiosMessage(error);
+      console.error(`Erreur suppression (id: ${id}) :`, message);
+      throw new Error("Erreur lors de la suppression de la personne.");
+    }
+  },
+
+  async archive(id: number, userId: number): Promise<Personne> {
+  try {
+    const response = await apiClient.put<Personne>(`/${id}/archiver`, { userId });
+    return response.data;
+  } catch (error: any) {
+    console.error("Erreur archivage :", getAxiosMessage(error));
+    throw new Error("Erreur lors de l'archivage de la personne.");
+  }
+ },
+
+
+  async getArchives(): Promise<Personne[]> {
+    try {
+      const response = await apiClient.get<Personne[]>("/archives");
+      return response.data;
+    } catch (error: any) {
+      console.error("Erreur getArchives :", getAxiosMessage(error));
+      throw new Error("Erreur lors de la récupération des personnes archivées.");
+    }
+  },
+
+  async restore(id: number, userId: number): Promise<Personne> {
+    try {
+      const response = await apiClient.put<Personne>(`/${id}/restaurer`, { userId });
+      return response.data;
+    } catch (error: any) {
+      console.error("Erreur restauration :", getAxiosMessage(error));
+      throw new Error("Erreur lors de la restauration de la personne.");
     }
   },
 };
+
+// 🔧 Fonction utilitaire pour lire les messages d’erreur d’Axios proprement
+function getAxiosMessage(error: any): string {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message || error.message || "Erreur Axios inconnue.";
+  }
+  return error instanceof Error ? error.message : "Erreur inconnue.";
+}
 
 export default personneService;
