@@ -79,9 +79,9 @@ const personneService = {
     }
   },
 
-  async archive(id: number, userId: number): Promise<Personne> {
+  async archive(id: number, archiveParId: number): Promise<Personne> {
   try {
-    const response = await apiClient.put<Personne>(`/${id}/archiver`, { userId });
+    const response = await apiClient.put<Personne>(`/${id}/archiver`, { archiveParId });
     return response.data;
   } catch (error: any) {
     console.error("Erreur archivage :", getAxiosMessage(error));
@@ -100,9 +100,9 @@ const personneService = {
     }
   },
 
-  async restore(id: number, userId: number): Promise<Personne> {
+  async restore(id: number, archiveParId: number): Promise<Personne> {
     try {
-      const response = await apiClient.put<Personne>(`/${id}/restaurer`, { userId });
+      const response = await apiClient.put<Personne>(`/${id}/restaurer`, { archiveParId });
       return response.data;
     } catch (error: any) {
       console.error("Erreur restauration :", getAxiosMessage(error));

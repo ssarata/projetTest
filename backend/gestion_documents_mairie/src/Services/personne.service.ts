@@ -62,9 +62,7 @@ const getPersonneById = async (id: number): Promise<Personne | null> => {
   }
 };
 
-/**
- * Mettre à jour les informations d'une personne
- */
+
 const updatePersonne = async (id: number, data: Partial<Personne>): Promise<Personne> => {
   try {
     const existingPersonne = await prisma.personne.findUnique({ where: { id } });
@@ -115,9 +113,7 @@ const updatePersonne = async (id: number, data: Partial<Personne>): Promise<Pers
   }
 };
 
-/**
- * Supprimer une personne définitivement de la base (y compris documents liés et user)
- */
+
 const deletePersonne = async (id: number): Promise<void> => {
   try {
     const personne = await prisma.personne.findUnique({
@@ -156,9 +152,7 @@ const deletePersonne = async (id: number): Promise<void> => {
   }
 };
 
-/**
- * Trouver une personne à partir de l'identifiant utilisateur
- */
+
 const getPersonneByUserId = async (userId: number): Promise<Personne | null> => {
   try {
     return await prisma.personne.findFirst({
@@ -174,9 +168,7 @@ const getPersonneByUserId = async (userId: number): Promise<Personne | null> => 
   }
 };
 
-/**
- * Archiver une personne (suppression logique)
- */
+
 const archiverPersonne = async (id: number, userId: number): Promise<Personne> => {
   try {
     const personne = await prisma.personne.findUnique({ where: { id } });
@@ -208,9 +200,7 @@ const archiverPersonne = async (id: number, userId: number): Promise<Personne> =
   }
 };
 
-/**
- * Restaurer une personne précédemment archivée
- */
+
 const restaurerPersonne = async (id: number, userId: number): Promise<Personne> => {
   try {
     const personne = await prisma.personne.findUnique({ where: { id } });
@@ -242,9 +232,7 @@ const restaurerPersonne = async (id: number, userId: number): Promise<Personne> 
   }
 };
 
-/**
- * Obtenir la liste de toutes les personnes archivées
- */
+
 const getPersonnesArchivees = async (): Promise<Personne[]> => {
   try {
     return await prisma.personne.findMany({
@@ -264,7 +252,6 @@ const getPersonnesArchivees = async (): Promise<Personne[]> => {
   }
 };
 
-// On exporte toutes les fonctions pour les utiliser dans d'autres fichiers
 export default {
   createPersonne,
   getAllPersonnes,

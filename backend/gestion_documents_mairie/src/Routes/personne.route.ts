@@ -14,31 +14,14 @@ import authenticateToken from '../middlewares/authMiddleware';
 
 const router = Router(); // Création du routeur Express
 
-// 👤 Créer une nouvelle personne (authentification requise)
 router.post('/', authenticateToken, createPersonne);
-
-// 📋 Obtenir toutes les personnes non archivées (authentification requise)
 router.get('/', authenticateToken, getAllPersonnes);
-
-// 📦 Obtenir toutes les personnes archivées
 router.get('/archives', authenticateToken, getPersonnesArchivees);
-
-// 🔍 Obtenir une personne à partir d'un ID utilisateur (authentification requise)
 router.get('/user/:userId', authenticateToken, getPersonneByUserId);
-
-// 🔍 Obtenir une personne par son ID (publique ou protégé selon ton usage)
 router.get('/:id', getPersonneById);
-
-// ✏️ Mettre à jour les infos d’une personne
 router.put('/:id', updatePersonne);
-
-// 📦 Archiver une personne (authentification requise)
 router.put('/:id/archiver', authenticateToken, archiverPersonne);
-
-// 🔁 Restaurer une personne archivée (authentification requise)
 router.put('/:id/restaurer', authenticateToken, restaurerPersonne);
-
-// ❌ Supprimer une personne (authentification requise)
 router.delete('/:id', authenticateToken, deletePersonne);
 
 export default router;

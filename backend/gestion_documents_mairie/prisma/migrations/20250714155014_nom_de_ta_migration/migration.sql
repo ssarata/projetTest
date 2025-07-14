@@ -27,6 +27,9 @@ CREATE TABLE "Personne" (
     "numeroCni" TEXT,
     "sexe" TEXT,
     "lieuNaissance" TEXT,
+    "archive" BOOLEAN NOT NULL DEFAULT false,
+    "dateArchivage" TIMESTAMP(3),
+    "archiveParId" INTEGER,
 
     CONSTRAINT "Personne_pkey" PRIMARY KEY ("id")
 );
@@ -68,8 +71,8 @@ CREATE TABLE "Document" (
 CREATE TABLE "DocumentPersonne" (
     "id" SERIAL NOT NULL,
     "fonction" TEXT NOT NULL,
-    "documentId" INTEGER NOT NULL,
-    "personneId" INTEGER NOT NULL,
+    "documentId" INTEGER,
+    "personneId" INTEGER,
 
     CONSTRAINT "DocumentPersonne_pkey" PRIMARY KEY ("id")
 );
@@ -82,6 +85,8 @@ CREATE TABLE "Mairie" (
     "logo" TEXT NOT NULL,
     "region" TEXT NOT NULL,
     "prefecture" TEXT NOT NULL,
+    "nomMaire" TEXT NOT NULL,
+    "prenomMaire" TEXT NOT NULL,
 
     CONSTRAINT "Mairie_pkey" PRIMARY KEY ("id")
 );
@@ -124,6 +129,9 @@ ALTER TABLE "User" ADD CONSTRAINT "User_id_fkey" FOREIGN KEY ("id") REFERENCES "
 ALTER TABLE "User" ADD CONSTRAINT "User_mairieId_fkey" FOREIGN KEY ("mairieId") REFERENCES "Mairie"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Personne" ADD CONSTRAINT "Personne_archiveParId_fkey" FOREIGN KEY ("archiveParId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "DocumentTemplate" ADD CONSTRAINT "DocumentTemplate_archiveParId_fkey" FOREIGN KEY ("archiveParId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -136,10 +144,10 @@ ALTER TABLE "Document" ADD CONSTRAINT "Document_userId_fkey" FOREIGN KEY ("userI
 ALTER TABLE "Document" ADD CONSTRAINT "Document_archiveParId_fkey" FOREIGN KEY ("archiveParId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DocumentPersonne" ADD CONSTRAINT "DocumentPersonne_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "Document"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DocumentPersonne" ADD CONSTRAINT "DocumentPersonne_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "Document"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DocumentPersonne" ADD CONSTRAINT "DocumentPersonne_personneId_fkey" FOREIGN KEY ("personneId") REFERENCES "Personne"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DocumentPersonne" ADD CONSTRAINT "DocumentPersonne_personneId_fkey" FOREIGN KEY ("personneId") REFERENCES "Personne"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_DocumentTemplateToVariable" ADD CONSTRAINT "_DocumentTemplateToVariable_A_fkey" FOREIGN KEY ("A") REFERENCES "DocumentTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;

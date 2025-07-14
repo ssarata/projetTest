@@ -12,14 +12,18 @@ model User {
   id        Int        @id @default(autoincrement())
   email     String     @unique
   password  String
-  personne  Personne   @relation(fields: [id], references: [id])
-  documents Document[]
-  mairieId  Int?
+  personne  Personne   @relation(fields: [id], references: [id]) // user hérite de personne
+  documents Document[] // un utilisateur peut générer plusieurs documents
+  mairieId  Int? // Relation optionnelle avec une mairie
   mairie    Mairie?    @relation(fields: [mairieId], references: [id])
+  isArchived Boolean @default(false) // Indique si l'utilisateur est archivé
+  archivedAt DateTime? // Date à laquelle l'utilisateur a été archivé
+  role       Role     @default(RESPONSABLE) // Nouveau champ rôle
 
-  documentsArchives         Document[]         @relation("Archiveur")
+  documentsArchives Document[] @relation("Archiveur")
+  personnesArchives  Personne[]  @relation("ArchiveurPersonne") 
   documentTemplatesArchives DocumentTemplate[] @relation("ArchiveurTemplate")
-  personnesArchives         Personne[]         @relation("ArchiveurPersonne") 
+
 }
 
 //table Personne
@@ -37,14 +41,8 @@ model Personne {
   lieuNaissance     String?
   user              User?
   documents         Document[]
-  documentPersonnes DocumentPersonne[] // Opposite relation field added
+  documentPersonnes DocumentPersonne[] 
 
-  // Ajout des champs pour l'archivage
-  // archive: Indique si la personne est archivée
-  // dateArchivage: Date à laquelle la personne a été archivée
-  // archiveParId: ID de l’utilisateur qui a archivé
-  // archivePar: Relation vers l'utilisateur qui a archivé la personne
-  // Ces champs sont optionnels pour permettre la création de personnes sans archivage immédiat
   archive       Boolean   @default(false)
   dateArchivage DateTime?
   archiveParId  Int?
@@ -58,9 +56,6 @@ model DocumentTemplate {
   content                   String
   variables                 Variable[]                 @relation("DocumentTemplateToVariable")
   documents                 Document[]
-  documentTemplateVariables DocumentTemplateVariable[]
-
-  // Ajout des champs pour l'archivage
   archive       Boolean   @default(false)
   dateArchivage DateTime?
   archiveParId  Int?
@@ -68,35 +63,21 @@ model DocumentTemplate {
 }
 
 
-//table Variable
 model Variable {
   id                        Int                        @id @default(autoincrement())
   nomVariable               String                     @unique
-  documentTemplateVariables DocumentTemplateVariable[]
   documentTemplates         DocumentTemplate[]         @relation("DocumentTemplateToVariable")
-}
-
-model DocumentTemplateVariable {
-  id Int @id @default(autoincrement())
-
-  documentTemplate   DocumentTemplate @relation(fields: [documentTemplateId], references: [id])
-  documentTemplateId Int
-  variable           Variable         @relation(fields: [variableId], references: [id])
-  variableId         Int
 }
 
 //table Document
 model Document {
   id              Int               @id @default(autoincrement())
   date            String
-  identiteDuMaire String?
   templateId      Int?
   template        DocumentTemplate? @relation(fields: [templateId], references: [id])
   personnes       Personne[]
   user            User              @relation(fields: [userId], references: [id])
   userId          Int
-
-  // 🔽 Système d'archivage avancé
   archive       Boolean   @default(false) // Indique si le document est archivé
   dateArchivage DateTime? // Date à laquelle le document a été archivé
   archiveParId  Int? // ID de l’utilisateur qui a archivé
@@ -108,10 +89,10 @@ model Document {
 model DocumentPersonne {
   id         Int      @id @default(autoincrement())
   fonction   String
-  document   Document @relation(fields: [documentId], references: [id])
-  documentId Int
-  personne   Personne @relation(fields: [personneId], references: [id])
-  personneId Int
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  documentId Int?
+  personne   Personne? @relation(fields: [personneId], references: [id], onDelete: SetNull)
+  personneId Int?
 }
 
 model Mairie {
@@ -121,5 +102,13 @@ model Mairie {
   logo       String
   region     String
   prefecture String
+  nomMaire String
+  prenomMaire String
   users      User[] // Une mairie peut avoir plusieurs utilisateurs
+}
+
+enum Role {
+  ADMIN
+  RESPONSABLE // Si vous utilisez ce rôle comme dans authMiddleware
+  // Ajoutez d'autres rôles si nécessaire
 }
