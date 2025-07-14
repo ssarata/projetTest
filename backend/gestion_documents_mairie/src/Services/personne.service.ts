@@ -1,18 +1,22 @@
+// On importe Prisma pour interagir avec la base de données, ainsi que les types utiles
 import { PrismaClient, Personne, Prisma } from '@prisma/client';
 import PersonneValidate from '../Validations/PersonneValidate';
 
+// On initialise Prisma
 const prisma = new PrismaClient();
 
+/**
+ * Créer une nouvelle personne dans la base de données
+ */
 const createPersonne = async (data: Prisma.PersonneCreateInput): Promise<Personne> => {
   try {
     const validatedData = PersonneValidate(data) as Prisma.PersonneCreateInput;
     return await prisma.personne.create({
       data: validatedData,
       include: {
-        user: true,
-        
+        user: true, // On récupère aussi les infos liées au compte utilisateur
         documentPersonnes: {
-          include: { document: true }
+          include: { document: true } // Et les documents liés à cette personne
         }
       }
     });
@@ -21,6 +25,9 @@ const createPersonne = async (data: Prisma.PersonneCreateInput): Promise<Personn
   }
 };
 
+/**
+ * Récupérer toutes les personnes (même celles archivées)
+ */
 const getAllPersonnes = async (): Promise<Personne[]> => {
   try {
     return await prisma.personne.findMany({
@@ -36,6 +43,9 @@ const getAllPersonnes = async (): Promise<Personne[]> => {
   }
 };
 
+/**
+ * Récupérer une personne par son identifiant
+ */
 const getPersonneById = async (id: number): Promise<Personne | null> => {
   try {
     return await prisma.personne.findUnique({
@@ -43,7 +53,7 @@ const getPersonneById = async (id: number): Promise<Personne | null> => {
       include: {
         user: true,
         documentPersonnes: {
-          include: { document:{ include: { template: true } } }
+          include: { document: true }
         }
       }
     });
@@ -52,6 +62,9 @@ const getPersonneById = async (id: number): Promise<Personne | null> => {
   }
 };
 
+/**
+ * Mettre à jour les informations d'une personne
+ */
 const updatePersonne = async (id: number, data: Partial<Personne>): Promise<Personne> => {
   try {
     const existingPersonne = await prisma.personne.findUnique({ where: { id } });
@@ -59,9 +72,9 @@ const updatePersonne = async (id: number, data: Partial<Personne>): Promise<Pers
       throw new Error(`La personne avec l'id ${id} n'existe pas.`);
     }
 
-    const validatedData = PersonneValidate(data);
+    const validatedData = PersonneValidate(data); // On valide les données reçues
 
-    // Filtrer uniquement les champs scalaires à mettre à jour
+    // On extrait les champs à mettre à jour
     const {
       nom,
       prenom,
@@ -102,7 +115,9 @@ const updatePersonne = async (id: number, data: Partial<Personne>): Promise<Pers
   }
 };
 
-
+/**
+ * Supprimer une personne définitivement de la base (y compris documents liés et user)
+ */
 const deletePersonne = async (id: number): Promise<void> => {
   try {
     const personne = await prisma.personne.findUnique({
@@ -117,18 +132,21 @@ const deletePersonne = async (id: number): Promise<void> => {
       throw new Error(`La personne avec l'id ${id} n'existe pas.`);
     }
 
+    // Supprimer les relations avec les documents si elles existent
     if (personne.documentPersonnes.length > 0) {
       await prisma.documentPersonne.deleteMany({
         where: { personneId: id }
       });
     }
 
+    // Supprimer le compte utilisateur associé si existant
     if (personne.user) {
       await prisma.user.delete({
         where: { id: personne.user.id }
       });
     }
 
+    // Supprimer la personne elle-même
     await prisma.personne.delete({
       where: { id }
     });
@@ -138,6 +156,9 @@ const deletePersonne = async (id: number): Promise<void> => {
   }
 };
 
+/**
+ * Trouver une personne à partir de l'identifiant utilisateur
+ */
 const getPersonneByUserId = async (userId: number): Promise<Personne | null> => {
   try {
     return await prisma.personne.findFirst({
@@ -153,8 +174,97 @@ const getPersonneByUserId = async (userId: number): Promise<Personne | null> => 
   }
 };
 
+/**
+ * Archiver une personne (suppression logique)
+ */
+const archiverPersonne = async (id: number, userId: number): Promise<Personne> => {
+  try {
+    const personne = await prisma.personne.findUnique({ where: { id } });
 
+    if (!personne) {
+      throw new Error(`La personne n'existe pas.`);
+    }
 
+    if (personne.archive) {
+      throw new Error("La personne est déjà archivée.");
+    }
+
+    return await prisma.personne.update({
+      where: { id },
+      data: {
+        archive: true,
+        dateArchivage: new Date(),
+        archiveParId: userId,
+      },
+      include: {
+        user: true,
+        documentPersonnes: {
+          include: { document: true }
+        }
+      }
+    });
+  } catch (error: any) {
+    throw new Error("Erreur lors de l'archivage de la personne : " + error.message);
+  }
+};
+
+/**
+ * Restaurer une personne précédemment archivée
+ */
+const restaurerPersonne = async (id: number, userId: number): Promise<Personne> => {
+  try {
+    const personne = await prisma.personne.findUnique({ where: { id } });
+
+    if (!personne) {
+      throw new Error(`La personne avec l'id ${id} n'existe pas.`);
+    }
+
+    if (!personne.archive) {
+      throw new Error("La personne n'est pas archivée.");
+    }
+
+    return await prisma.personne.update({
+      where: { id },
+      data: {
+        archive: false,
+        dateArchivage: new Date(), 
+        archiveParId: userId,
+      },
+      include: {
+        user: true,
+        documentPersonnes: {
+          include: { document: true }
+        }
+      }
+    });
+  } catch (error: any) {
+    throw new Error("Erreur lors de la restauration de la personne : " + error.message);
+  }
+};
+
+/**
+ * Obtenir la liste de toutes les personnes archivées
+ */
+const getPersonnesArchivees = async (): Promise<Personne[]> => {
+  try {
+    return await prisma.personne.findMany({
+      where: { archive: true },
+      orderBy: { dateArchivage: 'desc' },
+      include: {
+        archivePar: {
+          include: { personne: true }, // On affiche aussi qui a archivé la personne
+        },
+        documentPersonnes: {
+          include: { document: true }
+        }
+      }
+    });
+  } catch (error: any) {
+    throw new Error("Erreur lors de la récupération des personnes archivées : " + error.message);
+  }
+};
+
+// On exporte toutes les fonctions pour les utiliser dans d'autres fichiers
 export default {
   createPersonne,
   getAllPersonnes,
@@ -162,4 +272,7 @@ export default {
   updatePersonne,
   deletePersonne,
   getPersonneByUserId,
+  archiverPersonne,
+  restaurerPersonne,
+  getPersonnesArchivees
 };
