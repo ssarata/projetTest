@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//table User
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  password  String
+  personne  Personne   @relation(fields: [id], references: [id]) // user hérite de personne
+  documents Document[] // un utilisateur peut générer plusieurs documents
+  mairieId  Int? // Relation optionnelle avec une mairie
+  mairie    Mairie?    @relation(fields: [mairieId], references: [id])
+  isArchived Boolean @default(false) // Indique si l'utilisateur est archivé
+  archivedAt DateTime? // Date à laquelle l'utilisateur a été archivé
+  role       Role     @default(RESPONSABLE) // Nouveau champ rôle
+
+  documentsArchives Document[] @relation("Archiveur")
+  personnesArchives  Personne[]  @relation("ArchiveurPersonne") 
+  documentTemplatesArchives DocumentTemplate[] @relation("ArchiveurTemplate")
+
+}
+
+//table Personne
+model Personne {
+  id                Int                @id @default(autoincrement())
+  nom               String
+  prenom            String
+  profession        String?
+  adresse           String?
+  telephone         String?
+  dateNaissance     String?
+  nationalite       String?
+  numeroCni         String?
+  sexe              String?
+  lieuNaissance     String?
+  user              User?
+  documents         Document[]
+  documentPersonnes DocumentPersonne[] 
+
+  archive       Boolean   @default(false)
+  dateArchivage DateTime?
+  archiveParId  Int?
+  archivePar    User?     @relation("ArchiveurPersonne", fields: [archiveParId], references: [id])
+
+}
+
+model DocumentTemplate {
+  id                        Int                        @id @default(autoincrement())
+  typeDocument              String                     @unique
+  content                   String
+  variables                 Variable[]                 @relation("DocumentTemplateToVariable")
+  documents                 Document[]
+  archive       Boolean   @default(false)
+  dateArchivage DateTime?
+  archiveParId  Int?
+  archivePar    User?     @relation("ArchiveurTemplate", fields: [archiveParId], references: [id])
+}
+
+
+model Variable {
+  id                        Int                        @id @default(autoincrement())
+  nomVariable               String                     @unique
+  documentTemplates         DocumentTemplate[]         @relation("DocumentTemplateToVariable")
+}
+
+//table Document
+model Document {
+  id              Int               @id @default(autoincrement())
+  date            String
+  templateId      Int?
+  template        DocumentTemplate? @relation(fields: [templateId], references: [id])
+  personnes       Personne[]
+  user            User              @relation(fields: [userId], references: [id])
+  userId          Int
+  archive       Boolean   @default(false) // Indique si le document est archivé
+  dateArchivage DateTime? // Date à laquelle le document a été archivé
+  archiveParId  Int? // ID de l’utilisateur qui a archivé
+  archivePar    User?     @relation("Archiveur", fields: [archiveParId], references: [id])
+
+  documentPersonnes DocumentPersonne[]
+}
+
+model DocumentPersonne {
+  id         Int      @id @default(autoincrement())
+  fonction   String
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  documentId Int?
+  personne   Personne? @relation(fields: [personneId], references: [id], onDelete: SetNull)
+  personneId Int?
+}
+
+model Mairie {
+  id         Int    @id @default(autoincrement())
+  ville      String
+  commune    String
+  logo       String
+  region     String
+  prefecture String
+  nomMaire String?
+  prenomMaire String?
+  users      User[] // Une mairie peut avoir plusieurs utilisateurs
+}
+
+enum Role {
+  ADMIN
+  RESPONSABLE // Si vous utilisez ce rôle comme dans authMiddleware
+  // Ajoutez d'autres rôles si nécessaire
+}

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Mairie" ALTER COLUMN "nomMaire" DROP NOT NULL,
+ALTER COLUMN "prenomMaire" DROP NOT NULL;
