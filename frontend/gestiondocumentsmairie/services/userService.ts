@@ -155,3 +155,16 @@ export const register = async (payload: RegisterPayload): Promise<LoginResponse>
     throw handleApiServiceError(error, "Erreur lors de l'inscription. Veuillez réessayer.");
   }
 };
+
+
+export const getCurrentUser = async (): Promise<User> => {
+  try {
+    const response = await apiClient.get<User>("/me");
+    // console.log(response.data);
+    
+    return response.data;
+  } catch (error) {
+    throw handleApiServiceError(error, "Impossible de récupérer l'utilisateur courant.");
+  }
+};
+

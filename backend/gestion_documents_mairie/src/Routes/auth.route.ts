@@ -6,11 +6,11 @@ import {
   unarchiveUserController,
   permanentlyDeleteUserController,
   getAllUsersController,
-  updateUserController } from '../Controllers/auth.controller'; // Import updateUserController
+  updateUserController,
+  getCurrentUser } from '../Controllers/auth.controller'; // Import updateUserController
 import authenticateToken, { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { ensureAdmin } from '../middlewares/ensureAdmin'; // Importer le middleware ensureAdmin
 import { PrismaClient } from '@prisma/client';
-
 const prisma = new PrismaClient(); 
 
 
@@ -362,5 +362,6 @@ router.patch('/user/:id/unarchive', authenticateToken, unarchiveUserController);
  */
 router.delete('/user/:id/force-delete', authenticateToken, ensureAdmin, permanentlyDeleteUserController);
 
+router.get("/me", authenticateToken, getCurrentUser); // <-- Ajoute cette ligne
 
 export default router;

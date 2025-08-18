@@ -22,8 +22,8 @@ export interface LoginResponse {
   }
 }
 
-enum Role {
-  ADMIN,
-  RESPONSABLE // Si vous utilisez ce rôle comme dans authMiddleware
+export enum Role {
+  ADMIN = "ADMIN",
+  RESPONSABLE = "RESPONSABLE"
   // Ajoutez d'autres rôles si nécessaire
 }

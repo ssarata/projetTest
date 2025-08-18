@@ -204,6 +204,14 @@ export const getAllUsersController = async (req: Request, res: Response): Promis
   }
 };
 
+export const getCurrentUser = (req, res) => {
+  // req.user doit être rempli par ton middleware d'authentification
+  if (!req.user) {
+    return res.status(401).json({ message: "Non authentifié" });
+  }
+  res.json(req.user);
+};
+
 /**
  * Controller pour supprimer définitivement un utilisateur (Admin requis)
  * @param req - La requête HTTP

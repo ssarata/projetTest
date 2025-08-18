@@ -1,36 +1,37 @@
 import { Router } from 'express';
 import { DocumentTemplateController } from '../Controllers/DocumentTemplate.controller.js';
 import authenticateToken from '../middlewares/authMiddleware.js';
+import { ensureAdmin } from '../middlewares/ensureAdmin'; // Importer le middleware ensureAdmin
 
 const routes = Router();
 const controller = new DocumentTemplateController();
 
 // Création d'un template
-routes.post('/', authenticateToken, controller.create.bind(controller));
+routes.post('/', authenticateToken,ensureAdmin, controller.create.bind(controller));
 
 // Lister tous les templates
-routes.get('/', authenticateToken, controller.findAll.bind(controller));
+routes.get('/', authenticateToken, ensureAdmin, controller.findAll.bind(controller));
 
 // Lister tous les templates archivés
-routes.get('/archives', authenticateToken, controller.getTemplatesArchives.bind(controller));
+routes.get('/archives', authenticateToken,ensureAdmin, controller.getTemplatesArchives.bind(controller));
 
 // Archiver un template
-routes.put('/archiver/:id', authenticateToken, controller.archiver.bind(controller));
+routes.put('/archiver/:id', authenticateToken,ensureAdmin, controller.archiver.bind(controller));
 
 // Restaurer un template archivé
-routes.put('/restaurer/:id', authenticateToken, controller.restaurer.bind(controller));
+routes.put('/restaurer/:id', authenticateToken,ensureAdmin, controller.restaurer.bind(controller));
 
 // Supprimer définitivement un template
-routes.delete('/:id/force', authenticateToken, controller.delete.bind(controller));
+routes.delete('/:id/force', authenticateToken,ensureAdmin, controller.delete.bind(controller));
 
 // Supprimer un template (normal)
 //routes.delete('/:id', authenticateToken, controller.deleteDocumentTemplate.bind(controller));
 
 // Mettre à jour un template
-routes.put('/:id', authenticateToken, controller.update.bind(controller));
+routes.put('/:id', authenticateToken, ensureAdmin,controller.update.bind(controller));
 
 // Récupérer un template par ID
-routes.get('/get/:id', authenticateToken, controller.findById.bind(controller));
+routes.get('/get/:id', ensureAdmin,authenticateToken, controller.findById.bind(controller));
 
 // Créer une liaison entre une variable et un template
 //routes.post('/:variableId/:documentTemplateId', authenticateToken, controller.createTemplateVariable.bind(controller));

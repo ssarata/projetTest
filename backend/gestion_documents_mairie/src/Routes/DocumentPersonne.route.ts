@@ -1,6 +1,7 @@
 import express from 'express';
 import { DocumentPersonneController } from '../Controllers/DocumentPersonne.controller.js';
 import authenticateToken from '../middlewares/authMiddleware.js';
+import { ensureAdmin } from '../middlewares/ensureAdmin'; // Importer le middleware ensureAdmin
 
 const routes = express.Router();
 const controller = new DocumentPersonneController();

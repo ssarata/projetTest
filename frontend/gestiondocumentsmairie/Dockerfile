@@ -14,7 +14,6 @@ ENV NEXT_DISABLE_ESLINT=true
 RUN npm run build
 
 # Étape 2 : run
-FROM node:20-alpine
 
 WORKDIR /app
 
