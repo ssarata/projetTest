@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: mairie
+      POSTGRES_PASSWORD: mairie
+      POSTGRES_DB: mairiedb
+    ports: ["5433:5432"]
+    volumes: ["db-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mairie -d mairiedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile            # (celui avec openssl libssl3)
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://mairie:mairie@db:5432/mairiedb
+      JWT_SECRET: "dev-change-me"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["3000:3000"]                    # ⬅️ backend visible sur http://localhost:3000
+    volumes:
+      - .:/app
+      - app-node-modules:/app/node_modules
+    command: >
+      sh -c "
+        npm ci &&
+        npx prisma generate &&
+        (npx prisma migrate deploy || npx prisma db push) &&
+        npm run dev
+      "
+
+  frontend:
+    image: node:18-slim
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 4000                            
+    depends_on: [ app ]
+    ports: ["4000:4000"]                    
+    volumes:
+      - ../../frontend/gestiondocumentsmairie:/app
+      - frontend-node-modules:/app/node_modules
+    command: >
+      sh -c "npm ci && npm run dev"
+
+volumes:
+  db-data:
+  app-node-modules:
+  frontend-node-modules:
